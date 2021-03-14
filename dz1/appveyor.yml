@@ -1,0 +1,39 @@
+version: '0.1.{build}'
+
+image: Visual Studio 2017
+
+platform:
+  - x64
+
+configuration:
+  - Release
+
+before_build:
+  - cmake -G "Visual Studio 15 2017 Win64" .
+
+build:
+  project: $(APPVEYOR_BUILD_FOLDER)\helloworld.sln
+
+after_build:
+  - cpack -G ZIP $(APPVEYOR_BUILD_FOLDER)
+
+test_script:
+  - '%APPVEYOR_BUILD_FOLDER%\%CONFIGURATION%\tests.exe'
+
+artifacts:
+  - path: '*.zip'
+    name: zip-x64
+
+deploy:
+- provider: BinTray
+  username: alexeyya
+  api_key:
+    secure: AxjYJbTd/GAJNYnkV6NpQoxE8JKQbHBT0ZfCa5kg2MvJObnYw7XYQq8EZ+wAjjrn
+  subject: alexeyya
+  repo: helloworld
+  package: origin
+  artifact: zip-x64
+  publish: true
+  override: true
+  explode: true
+  

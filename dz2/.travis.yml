@@ -1,0 +1,21 @@
+language: cpp
+os: linux
+dist: bionic
+compiler: gcc
+
+before_install:
+    - chmod +x build.sh
+    - sudo add-apt-repository ppa:mhier/libboost-latest --yes
+    - sudo apt-get update
+
+install:
+    - sudo apt-get install libboost1.70-dev
+
+script: ./build.sh
+
+deploy:
+    provider: bintray
+    skip_cleanup: true
+    user: alexeyya
+    key: ${BINTRAY_KEY}
+    file: ./build/bintray.json

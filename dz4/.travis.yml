@@ -1,0 +1,34 @@
+language: cpp
+os: linux
+dist: bionic
+compiler: gcc
+
+addons:
+  apt:
+    packages:
+      - doxygen
+      - doxygen-doc
+      - doxygen-latex
+      - doxygen-gui
+      - graphviz
+
+before_install:
+    - chmod +x build.sh
+
+script: ./build.sh
+
+deploy:
+  - provider: bintray
+    skip_cleanup: true
+    user: alexeyya
+    key: ${BINTRAY_KEY}
+    file: ./build/bintray.json
+  
+  - provider: pages
+    skip_cleanup: true
+    github_token: ${GITHUB_TOKEN}
+    local_dir: ./doc/html
+    keep_history: true
+    on:
+      branch: master
+    

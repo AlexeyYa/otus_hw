@@ -1,0 +1,7 @@
+#pragma once
+
+#define HelloWorld_VERSION_MAJOR @helloworld_VERSION_MAJOR@
+#define HelloWorld_VERSION_MINOR @helloworld_VERSION_MINOR@
+#define HelloWorld_VERSION_PATCH @helloworld_VERSION_PATCH@
+
+#cmakedefine USE_VERSION

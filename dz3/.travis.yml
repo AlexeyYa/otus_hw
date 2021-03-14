@@ -1,0 +1,16 @@
+language: cpp
+os: linux
+dist: bionic
+compiler: gcc
+
+before_install:
+    - chmod +x build.sh
+
+script: ./build.sh
+
+deploy:
+    provider: bintray
+    skip_cleanup: true
+    user: alexeyya
+    key: ${BINTRAY_KEY}
+    file: ./build/bintray.json

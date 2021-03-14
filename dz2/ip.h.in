@@ -1,0 +1,168 @@
+#pragma once
+#include <vector>
+
+#cmakedefine USE_BOOST
+
+#ifdef USE_BOOST
+
+#include <boost/asio/ip/address_v4.hpp>
+using ip_address = boost::asio::ip::address_v4;
+
+ip_address split(const std::string &str)
+{
+    ip_address ip = boost::asio::ip::make_address_v4(str.substr(0, str.find('\t')));
+    ip.to_string();
+    return ip;
+}
+
+std::vector<ip_address> filter(unsigned char d0, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if (ip.to_bytes()[0] == d0){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+std::vector<ip_address> filter(unsigned char d0, unsigned char d1, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if (ip.to_bytes()[0] == d0 && ip.to_bytes()[1] == d1){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+std::vector<ip_address> filter_any(unsigned char d0, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if (ip.to_bytes()[0] == d0 || ip.to_bytes()[1] == d0 || ip.to_bytes()[2] == d0 || ip.to_bytes()[3] == d0){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+#else
+#ifdef WIN32
+#include <Winsock2.h>
+#include <ws2tcpip.h>
+#include <iostream>
+using ip_address = in_addr;
+
+ip_address split(const std::string &str)
+{
+    ip_address ip;
+    void *addr = &ip;
+    InetPton(AF_INET, str.substr(0, str.find('\t')).c_str(), addr);
+    return ip;
+}
+
+std::vector<ip_address> filter(unsigned char d0, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if (ip.S_un.S_un_b.s_b1 == d0){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+std::vector<ip_address> filter(unsigned char d0, unsigned char d1, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if (ip.S_un.S_un_b.s_b1 == d0 && ip.S_un.S_un_b.s_b2 == d1){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+std::vector<ip_address> filter_any(unsigned char d0, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if (ip.S_un.S_un_b.s_b1 == d0 || ip.S_un.S_un_b.s_b2 == d0 || ip.S_un.S_un_b.s_b3 == d0 ||
+                ip.S_un.S_un_b.s_b4 == d0){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+bool operator<(ip_address lhs, ip_address rhs){
+    return ntohl(lhs.S_un.S_addr) < ntohl(rhs.S_un.S_addr);
+}
+bool operator>(ip_address lhs, ip_address rhs){
+    return ntohl(lhs.S_un.S_addr) > ntohl(rhs.S_un.S_addr);
+}
+
+std::ostream& operator<<(std::ostream& os, ip_address ip){
+    char s[INET_ADDRSTRLEN];
+    void *addr = &ip;
+    InetNtop(AF_INET, addr, s, sizeof(s));
+    os << s;
+    return os;
+}
+
+#elif __linux__
+#include <arpa/inet.h>
+#include <iostream>
+using ip_address = in_addr;
+
+ip_address split(const std::string &str)
+{
+    ip_address ip;
+    void *addr = &ip;
+    inet_pton(AF_INET, str.substr(0, str.find('\t')).c_str(), addr);
+    return ip;
+}
+
+std::vector<ip_address> filter(unsigned char d0, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if ((ip.s_addr & 0x000000ff) == d0){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+std::vector<ip_address> filter(unsigned char d0, unsigned char d1, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if ((ip.s_addr & 0x000000ff) == d0 && ((ip.s_addr & 0x0000ff00) >> 8) == d1){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+std::vector<ip_address> filter_any(unsigned char d0, const std::vector<ip_address>& ip_pool){
+    std::vector<ip_address> result;
+    for (ip_address ip : ip_pool){
+        if ((ip.s_addr & 0x000000ff) == d0 || ((ip.s_addr & 0x0000ff00) >> 8) == d0 || ((ip.s_addr & 0x00ff0000) >> 16) == d0 ||
+                ((ip.s_addr & 0xff000000) >> 24) == d0){
+            result.push_back(ip);
+        }
+    }
+    return result;
+}
+
+bool operator<(ip_address lhs, ip_address rhs){
+    return ntohl(lhs.s_addr) < ntohl(rhs.s_addr);
+}
+bool operator>(ip_address lhs, ip_address rhs){
+    return ntohl(lhs.s_addr) > ntohl(rhs.s_addr);
+}
+
+std::ostream& operator<<(std::ostream& os, ip_address ip){
+    char s[INET_ADDRSTRLEN];
+    void *addr = &ip;
+    inet_ntop(AF_INET, addr, s, sizeof(s));
+    os << s;
+    return os;
+}
+
+#endif
+#endif
